@@ -1,3 +1,30 @@
+
+:root {
+  --gunmetal: #29343D;
+  --gunmetal-light: #394956;
+  --malachite: #2EDC76;
+  --malachite-dark: #21C063;
+  --malachite-disabled: #188C48;
+  --tomato: #FF6347;
+  --silver: #ADADAD;
+  --timberwolf: #DADADA;
+  background-color: var(--gunmetal);
+}
+
+.App {
+  text-align: left;
+}
+
+.App-header {
+  padding: 20px;
+  align-items: center;
+  justify-content: space-evenly;
+  font-size: calc(5px + 4vmin);
+  color: white;
+  border-bottom: 3px solid var(--malachite);
+  background-image: linear-gradient(var(--gunmetal), var(--gunmetal-light));
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,4 +37,133 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.github-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: max-content;
+  color: var(--timberwolf);
+  font-size: 25px;
+  text-decoration: none;
+  
+  .github {
+    margin: 0;
+    padding-right: 1rem;
+  }
+}
+
+.container {
+  display: grid;
+  flex: 1;
+  justify-content: center;
+  margin: 20px;
+  grid-template-columns: repeat(auto-fit, 250px);
+  column-gap: 20px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-btn {
+  font-size: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+  color: black;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--malachite);
+}
+
+.dropdown-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 10px;
+}
+
+.dropdown-btn:hover {
+  background-color: var(--malachite-dark);
+}
+
+.dropdown-btn:disabled {
+  background-color: var(--malachite-disabled);
+  cursor: not-allowed;
+}
+
+.dropdown-content {
+  position: absolute;
+  display: grid;
+  grid-auto-rows: auto;
+  padding: 10px 0;
+  background-color: var(--gunmetal);
+  min-width: 160px;
+  width: max-content;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+  z-index: 10;
+
+  .dropdown-item {
+    font-size: 16px;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+    color: white;
+    border: none;
+    background-color: var(--gunmetal);
+  }
+
+  .dropdown-item:hover {
+    background-color: var(--gunmetal-light);
+  }
+}
+
+.start-stop {
+  display: flex;
+  align-self: center;
+}
+
+.start-stop-btn {
+  font-size: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  color: black;
+  border-radius: 30px;
+  border: none;
+  background-color: var(--malachite);
+}
+
+.start-stop-btn:hover {
+  background-color: var(--malachite-dark);
+}
+
+.start-stop-btn:disabled {
+  background-color: var(--malachite-disabled);
+  cursor: not-allowed;
+}
+
+.canvas-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 10px;
+  padding: 50px;
+  border-radius: 8px;
+  background-color: var(--gunmetal-light);
 }
