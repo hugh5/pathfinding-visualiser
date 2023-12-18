@@ -1,6 +1,3 @@
-export const ROWS = 39;
-export const COLS = 49;
-
 export enum MazeGen {
     RecursiveBacktracker = "Recursive Backtracker",
     RecursiveDivision = "Recursive Division",
@@ -43,6 +40,9 @@ export const COLORS = {
     malachiteDark: "#21C063",
     malachiteDisabled: "#188C48",
     tomato: "#FF6347",
+    tomatoDark: "#CC4F39",
+    celestialBlue: "#2697E3",
+    celestialBlueDark: "#1776B5",
     silver: "#ADADAD",
     timberwolf: "#DADADA",
 };

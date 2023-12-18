@@ -5,60 +5,35 @@ export const squareSize = 45;
 
 function squareSketch(p5) {
     // state
-    let grid = [];
+    let grid;
     let rows;
     let cols;
     let frameRate = 1;
     let mazeGenerated;
     let pathGenerated;
+    let pathVisible;
 
     // generation
-    let generation = MazeGen.RandomWalls;
-    let stack = [];
+    let generation = MazeGen.RecursiveBacktracker;
+    let stack;
     let current;
 
     // path finding
-    let queue = [];
-    let path = [];
+    let queue;
+    let path;
     let start;
     let end;
 
-    const initPathFinding = () => {
-        let startInd = Math.floor(Math.random() * grid.length);
-        start = grid[startInd];
-        let endInd = Math.floor(Math.random() * grid.length);
-        if (endInd === startInd) {
-            endInd = (endInd + grid.length / 2) % grid.length;
-        }
-        end = grid[endInd];
-
-        start.isStart = true;
-        end.isEnd = true;
-        mazeGenerated = true;
-        start.visited = true;
-        start.distance = 0;
-        queue.push(start);
-    };
-
-    p5.setup = () => {
-        p5.frameRate(frameRate);
-        const h = Math.max(
-            (p5.windowHeight -
-                document.getElementsByClassName("App-header")[0].offsetHeight) *
-                0.8,
-            600
-        );
-        const w = p5.windowWidth * 0.8;
-        cols = Math.floor(w / squareSize);
-        rows = Math.floor(h / squareSize);
-        p5.createCanvas(cols * squareSize, rows * squareSize);
-
+    const initMazeGeneration = () => {
+        grid = [];
         for (let j = 0; j < rows; j++) {
             for (let i = 0; i < cols; i++) {
                 const cell = new Cell(i, j);
                 grid.push(cell);
             }
         }
+        stack = [];
+        current = undefined;
 
         if (generation === MazeGen.RecursiveBacktracker) {
             let startInd = Math.floor(Math.random() * grid.length);
@@ -88,11 +63,48 @@ function squareSketch(p5) {
         }
         mazeGenerated = false;
         pathGenerated = false;
+        pathVisible = false;
+    };
+
+    const initPathFinding = () => {
+        let startInd = Math.floor(Math.random() * grid.length);
+        start = grid[startInd];
+        let endInd = Math.floor(Math.random() * grid.length);
+        if (endInd === startInd) {
+            endInd = (endInd + grid.length / 2) % grid.length;
+        }
+        end = grid[endInd];
+
+        start.isStart = true;
+        end.isEnd = true;
+        start.visited = true;
+        start.distance = 0;
+        queue = [start];
+        path = [];
+
+        mazeGenerated = true;
+        pathGenerated = false;
+        pathVisible = false;
+    };
+
+    p5.setup = () => {
+        p5.frameRate(frameRate);
+        const h = Math.max(
+            (p5.windowHeight -
+                document.getElementsByClassName("App-header")[0].offsetHeight) *
+                0.9,
+            300
+        );
+        const w = p5.windowWidth * 0.9;
+        cols = Math.floor(w / squareSize);
+        rows = Math.floor(h / squareSize);
+        p5.createCanvas(cols * squareSize, rows * squareSize);
+
+        initMazeGeneration();
     };
 
     p5.updateWithProps = (props) => {
         if (props.speed) {
-            console.log(props.speed);
             switch (props.speed) {
                 case Speed.Slow:
                     frameRate = 2;
@@ -106,6 +118,10 @@ function squareSketch(p5) {
                 default:
                     break;
             }
+        }
+        if (props.mazeGen && props.mazeGen !== generation) {
+            generation = props.mazeGen;
+            initMazeGeneration();
         }
     };
 
@@ -122,7 +138,6 @@ function squareSketch(p5) {
                     return !neighbor.generated;
                 });
                 let r = Math.floor(Math.random() * neighbors.length);
-                console.log(r);
                 let next = neighbors[r];
                 if (next) {
                     next.generated = true;
@@ -144,8 +159,9 @@ function squareSketch(p5) {
                     do {
                         params = stack.pop();
                     } while (
-                        (params && params.width <= 1) ||
-                        (params && params.height <= 1)
+                        stack.length > 0 &&
+                        params &&
+                        (params.width <= 1 || params.height <= 1)
                     );
                     if (!params) {
                         return;
@@ -161,9 +177,7 @@ function squareSketch(p5) {
                                 : width > height
                                   ? false
                                   : Math.random() < 0.5;
-                        // # where will the wall be drawn from?
-                        // wx = x + (horizontal ? 0 : rand(width-2))
-                        // wy = y + (horizontal ? rand(height-2) : 0)
+
                         let wx =
                             x +
                             (horizontal
@@ -175,9 +189,6 @@ function squareSketch(p5) {
                                 ? Math.floor(Math.random() * (height - 1))
                                 : 0);
 
-                        // # where will the passage through the wall exist?
-                        // px = wx + (horizontal ? rand(width) : 0)
-                        // py = wy + (horizontal ? 0 : rand(height))
                         let px =
                             wx +
                             (horizontal
@@ -189,27 +200,11 @@ function squareSketch(p5) {
                                 ? 0
                                 : Math.floor(Math.random() * height));
 
-                        // # what direction will the wall be drawn?
-                        // dx = horizontal ? 1 : 0
-                        // dy = horizontal ? 0 : 1
                         let dx = horizontal ? 1 : 0;
                         let dy = horizontal ? 0 : 1;
-
-                        // # how long will the wall be?
-                        // length = horizontal ? width : height
                         let length = horizontal ? width : height;
 
-                        // # what direction is perpendicular to the wall?
-                        // dir = horizontal ? S : E
-
-                        // length.times do
-                        // grid[wy][wx] |= dir if wx != px || wy != py
-                        // wx += dx
-                        // wy += dy
-                        // end
                         for (let i = 0; i < length; i++) {
-                            // grid[index(wx, wy)].generated = true;
-
                             if (wx !== px || wy !== py) {
                                 if (horizontal) {
                                     addWalls(
@@ -255,7 +250,7 @@ function squareSketch(p5) {
                     let neighbors = current.getNeighbors();
                     if (neighbors.length > 0) {
                         neighbors.forEach((neighbor) => {
-                            if (Math.random() < 0.5) {
+                            if (Math.random() < 0.4) {
                                 removeWalls(current, neighbor);
                             }
                         });
@@ -270,14 +265,14 @@ function squareSketch(p5) {
             p5.circle(
                 start.x * squareSize + squareSize / 2,
                 start.y * squareSize + squareSize / 2,
-                squareSize / 2
+                squareSize * 0.6
             );
 
-            p5.fill(COLORS.tomato);
+            p5.fill(COLORS.celestialBlue);
             p5.circle(
                 end.x * squareSize + squareSize / 2,
                 end.y * squareSize + squareSize / 2,
-                squareSize / 2
+                squareSize * 0.6
             );
             // bfs
             if (queue.length > 0) {
@@ -304,7 +299,7 @@ function squareSketch(p5) {
                         neighbor.distance = current.distance + 1;
                         queue.push(neighbor);
                         p5.stroke(COLORS.malachiteDisabled);
-                        p5.strokeWeight(squareSize * 0.3);
+                        p5.strokeWeight(squareSize * 0.2);
                         p5.line(
                             (current.x + 0.5) * squareSize,
                             (current.y + 0.5) * squareSize,
@@ -313,6 +308,36 @@ function squareSketch(p5) {
                         );
                     }
                 });
+            }
+        } else if (!pathVisible) {
+            if (path.length > 1) {
+                let next = path.pop();
+                let parent = next.parent;
+                p5.stroke(COLORS.celestialBlueDark);
+                p5.strokeWeight(squareSize * 0.3);
+                p5.line(
+                    (parent.x + 0.5) * squareSize,
+                    (parent.y + 0.5) * squareSize,
+                    (next.x + 0.5) * squareSize,
+                    (next.y + 0.5) * squareSize
+                );
+
+                p5.noStroke();
+                p5.fill(COLORS.malachite);
+                p5.circle(
+                    start.x * squareSize + squareSize / 2,
+                    start.y * squareSize + squareSize / 2,
+                    squareSize * 0.6
+                );
+
+                p5.fill(COLORS.celestialBlue);
+                p5.circle(
+                    end.x * squareSize + squareSize / 2,
+                    end.y * squareSize + squareSize / 2,
+                    squareSize * 0.6
+                );
+            } else {
+                pathVisible = true;
             }
         }
     };
@@ -352,7 +377,7 @@ function squareSketch(p5) {
             p5.rect(x, y, squareSize, squareSize);
 
             p5.stroke(COLORS.gunmetalLight);
-            p5.strokeWeight(3);
+            p5.strokeWeight(squareSize * 0.05);
             if (this.walls.top) {
                 p5.line(x, y, x + squareSize, y);
             }
@@ -366,7 +391,6 @@ function squareSketch(p5) {
                 p5.line(x, y + squareSize, x, y);
             }
         }
-        ge;
 
         getAdjacent() {
             const neighbors = [];
