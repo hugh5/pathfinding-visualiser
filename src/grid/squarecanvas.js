@@ -14,9 +14,10 @@ function squareSketch(p5) {
     let pathVisible;
 
     // generation
-    let generation = MazeGen.RecursiveBacktracker;
+    let generation;
     let stack;
     let current;
+    let sets;
 
     // path finding
     let queue;
@@ -33,6 +34,7 @@ function squareSketch(p5) {
             }
         }
         stack = [];
+        sets = new Set();
         current = undefined;
 
         if (generation === MazeGen.RecursiveBacktracker) {
@@ -60,6 +62,34 @@ function squareSketch(p5) {
                 grid[i].generated = true;
                 stack.push(grid[grid.length - 1 - i]);
             }
+        } else if (generation === MazeGen.RandomizedPrim) {
+            let startInd = Math.floor(Math.random() * grid.length);
+            current = grid[startInd];
+            current.generated = true;
+            current.getNeighbors().forEach((neighbor) => {
+                neighbor.generated = true;
+                stack.push([neighbor, current]);
+            });
+        } else if (generation === MazeGen.RandomizedKruskal) {
+            sets = new Set(grid.map((cell) => new Set([cell])));
+            for (let i = 0; i < grid.length; i++) {
+                if (i % cols !== cols - 1) {
+                    stack.push([grid[i], grid[i + 1]]);
+                }
+                if (i < grid.length - cols) {
+                    stack.push([grid[i], grid[i + cols]]);
+                }
+            }
+        } else if (generation === MazeGen.None) {
+            for (let i = 0; i < grid.length; i++) {
+                grid[i].generated = true;
+                if (i % cols !== cols - 1) {
+                    removeWalls(grid[i], grid[i + 1]);
+                }
+                if (i < grid.length - cols) {
+                    removeWalls(grid[i], grid[i + cols]);
+                }
+            }
         }
         mazeGenerated = false;
         pathGenerated = false;
@@ -67,6 +97,12 @@ function squareSketch(p5) {
     };
 
     const initPathFinding = () => {
+        if (current) {
+            current.highlighted = false;
+            current.show(p5);
+            current = undefined;
+        }
+
         let startInd = Math.floor(Math.random() * grid.length);
         start = grid[startInd];
         let endInd = Math.floor(Math.random() * grid.length);
@@ -147,10 +183,6 @@ function squareSketch(p5) {
                 } else if (stack.length > 0) {
                     current = stack.pop();
                 } else {
-                    current.highlighted = false;
-                    current.show(p5);
-                    current = undefined;
-
                     initPathFinding();
                 }
             } else if (generation === MazeGen.RecursiveDivision) {
@@ -221,19 +253,12 @@ function squareSketch(p5) {
                             wx += dx;
                             wy += dy;
                         }
-                        // nx, ny = x, y
-                        // w, h = horizontal ? [width, wy-y+1] : [wx-x+1, height]
-                        // divide(grid, nx, ny, w, h, choose_orientation(w, h))
                         stack.push({
                             x: x,
                             y: y,
                             width: horizontal ? width : wx - x + 1,
                             height: horizontal ? wy - y + 1 : height,
                         });
-
-                        // nx, ny = horizontal ? [x, wy+1] : [wx+1, y]
-                        // w, h = horizontal ? [width, y+height-wy-1] : [x+width-wx-1, height]
-                        // divide(grid, nx, ny, w, h, choose_orientation(w, h))
                         stack.push({
                             x: horizontal ? x : wx + 1,
                             y: horizontal ? wy + 1 : y,
@@ -258,6 +283,62 @@ function squareSketch(p5) {
                 } else {
                     initPathFinding();
                 }
+            } else if (generation === MazeGen.RandomizedPrim) {
+                if (stack.length > 0) {
+                    let next = stack[Math.floor(Math.random() * stack.length)];
+                    stack = stack.filter((cell) => {
+                        return cell !== next;
+                    });
+                    if (next) {
+                        current = next[0];
+                        let a = next[0];
+                        let b = next[1];
+
+                        removeWalls(a, b);
+                        a.getNeighbors().forEach((neighbor) => {
+                            if (!neighbor.generated) {
+                                neighbor.generated = true;
+                                stack.push([neighbor, a]);
+                            }
+                        });
+                    }
+                } else {
+                    initPathFinding();
+                }
+            } else if (generation === MazeGen.RandomizedKruskal) {
+                if (stack.length > 1) {
+                    let next = stack[Math.floor(Math.random() * stack.length)];
+                    stack = stack.filter((cell) => {
+                        return cell !== next;
+                    });
+                    if (next) {
+                        current = next[0];
+                        let a = next[0];
+                        let b = next[1];
+                        let aSet;
+                        let bSet;
+                        sets.forEach((set) => {
+                            if (set.has(a)) {
+                                aSet = set;
+                            }
+                            if (set.has(b)) {
+                                bSet = set;
+                            }
+                        });
+                        if (aSet !== bSet) {
+                            removeWalls(a, b);
+                            a.generated = true;
+                            b.generated = true;
+                            sets.delete(aSet);
+                            sets.delete(bSet);
+                            sets.add(new Set([...aSet, ...bSet]));
+                        }
+                    }
+                } else {
+                    initPathFinding();
+                }
+            } else if (generation === MazeGen.None) {
+                initPathFinding();
             }
         } else if (!pathGenerated) {
             p5.noStroke();
@@ -277,18 +358,6 @@ function squareSketch(p5) {
             // bfs
             if (queue.length > 0) {
                 let current = queue.shift();
-                if (current === end) {
-                    let temp = current;
-                    path.push(temp);
-                    while (temp.parent) {
-                        path.push(temp.parent);
-                        temp = temp.parent;
-                    }
-                    path.reverse();
-                    console.log(path);
-                    pathGenerated = true;
-                    return;
-                }
                 let neighbors = current.getAdjacent().filter((neighbor) => {
                     return !neighbor.visited;
                 });
@@ -299,13 +368,24 @@ function squareSketch(p5) {
                         neighbor.distance = current.distance + 1;
                         queue.push(neighbor);
                         p5.stroke(COLORS.malachiteDisabled);
-                        p5.strokeWeight(squareSize * 0.2);
+                        p5.strokeWeight(squareSize * 0.15);
                         p5.line(
                             (current.x + 0.5) * squareSize,
                             (current.y + 0.5) * squareSize,
                             (neighbor.x + 0.5) * squareSize,
                             (neighbor.y + 0.5) * squareSize
                         );
+                        if (neighbor === end) {
+                            let temp = neighbor;
+                            path.push(temp);
+                            while (temp.parent) {
+                                path.push(temp.parent);
+                                temp = temp.parent;
+                            }
+                            path.reverse();
+                            pathGenerated = true;
+                            return;
+                        }
                     }
                 });
             }

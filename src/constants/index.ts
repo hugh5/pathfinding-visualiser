@@ -4,6 +4,7 @@ export enum MazeGen {
     RandomWalls = "Random Walls",
     RandomizedPrim = "Randomized Prim's",
     RandomizedKruskal = "Randomized Kruskal's",
+    None = "None",
 }
 
 export enum PathfindingAlgorithm {
