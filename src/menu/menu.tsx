@@ -4,13 +4,7 @@ import { FaPlay, FaRotateLeft, FaStop } from "react-icons/fa6";
 import { RxQuestionMark } from "react-icons/rx";
 import { SlArrowDown } from "react-icons/sl";
 import { AppContext } from "../context/appstate";
-import {
-    GridType,
-    MazeGen,
-    PathfindingAlgorithm,
-    RunningState,
-    Speed,
-} from "../constants";
+import { GridSize, MazeGen, PathfindingAlgorithm, Speed } from "../constants";
 
 const Menu = () => {
     const mazeRef = useRef(null);
@@ -23,17 +17,14 @@ const Menu = () => {
         setMazeGen,
         algorithm,
         setAlgorithm,
-        gridType,
-        setGridType,
+        gridSize,
+        setGridSize,
         speed,
         setSpeed,
-        running,
-        setRunning,
         windowSize,
     } = useContext(AppContext);
 
     const [dropdown, setDropdown] = useState<string | null>(null);
-    const disabled = running === RunningState.RUNNING;
 
     useEffect(() => {
         const handleClickOutside = (event: any) => {
@@ -89,7 +80,6 @@ const Menu = () => {
                     <button
                         className="dropdown-btn"
                         ref={mazeRef}
-                        disabled={disabled}
                         onClick={() =>
                             setDropdown(
                                 dropdown === "mazeGen" ? null : "mazeGen"
@@ -130,7 +120,6 @@ const Menu = () => {
                     <button
                         className="dropdown-btn"
                         ref={pathfindingRef}
-                        disabled={disabled}
                         onClick={() =>
                             setDropdown(
                                 dropdown === "pathfindingAlgorithm"
@@ -177,41 +166,40 @@ const Menu = () => {
                 </div>
                 <div className="dropdown">
                     <div className="dropdown-caption">
-                        Grid Type:
+                        Grid Size:
                         <RxQuestionMark />
                     </div>
                     <button
                         className="dropdown-btn"
                         ref={gridRef}
-                        disabled={disabled}
                         onClick={() =>
                             setDropdown(
-                                dropdown === "gridType" ? null : "gridType"
+                                dropdown === "gridSize" ? null : "gridSize"
                             )
                         }
                     >
-                        {gridType}
+                        {gridSize}
                         <SlArrowDown />
                     </button>
 
                     <div
                         className="dropdown-content"
                         style={{
-                            display: dropdown === "gridType" ? "" : "none",
+                            display: dropdown === "gridSize" ? "" : "none",
                         }}
                     >
-                        {Object.keys(GridType).map((key: string) => (
+                        {Object.keys(GridSize).map((key: string) => (
                             <button
                                 className="dropdown-item"
                                 key={key}
                                 onClick={() => {
-                                    setGridType(
-                                        GridType[key as keyof typeof GridType]
+                                    setGridSize(
+                                        GridSize[key as keyof typeof GridSize]
                                     );
                                     setDropdown(null);
                                 }}
                             >
-                                {GridType[key as keyof typeof GridType]}
+                                {GridSize[key as keyof typeof GridSize]}
                             </button>
                         ))}
                     </div>
@@ -252,7 +240,7 @@ const Menu = () => {
                     </div>
                 </div>
             </div>
-            <div className="start-stop">
+            {/* <div className="start-stop">
                 <button
                     className="start-stop-btn"
                     onClick={() => {
@@ -273,7 +261,7 @@ const Menu = () => {
                         <FaStop />
                     )}
                 </button>
-            </div>
+            </div> */}
         </div>
     );
 };

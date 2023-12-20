@@ -1,37 +1,28 @@
 export enum MazeGen {
     RecursiveBacktracker = "Recursive Backtracker",
     RecursiveDivision = "Recursive Division",
-    RandomWalls = "Random Walls",
     RandomizedPrim = "Randomized Prim's",
     RandomizedKruskal = "Randomized Kruskal's",
+    RandomWalls = "Random Walls",
     None = "None",
 }
 
 export enum PathfindingAlgorithm {
-    Dijkstra = "Dijkstra's",
-    AStar = "A*",
-    GreedyBestFirstSearch = "Greedy Best-First Search",
     BreadthFirstSearch = "Breadth-First Search",
     DepthFirstSearch = "Depth-First Search",
+    GreedyBestFirstSearch = "Greedy Best-First Search",
 }
 
-export enum GridType {
-    Square = "Square",
-    Graph = "Graph",
-    Hexagonal = "Hexagonal",
-    Circular = "Circular",
+export enum GridSize {
+    Small = "Small",
+    Medium = "Medium",
+    Large = "Large",
 }
 
 export enum Speed {
     Fast = "Fast",
     Medium = "Medium",
     Slow = "Slow",
-}
-
-export enum RunningState {
-    READY = "READY",
-    RUNNING = "RUNNING",
-    FINISHED = "FINISHED",
 }
 
 export const COLORS = {

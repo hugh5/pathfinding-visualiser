@@ -1,12 +1,6 @@
 import React, { createContext, useLayoutEffect, useState } from "react";
 
-import {
-    GridType,
-    MazeGen,
-    PathfindingAlgorithm,
-    RunningState,
-    Speed,
-} from "../constants";
+import { GridSize, MazeGen, PathfindingAlgorithm, Speed } from "../constants";
 
 export const AppContext = createContext<any>(null);
 
@@ -19,11 +13,10 @@ export function AppContextProvider({
         MazeGen.RecursiveBacktracker
     );
     const [algorithm, setAlgorithm] = useState<string>(
-        PathfindingAlgorithm.Dijkstra
+        PathfindingAlgorithm.BreadthFirstSearch
     );
-    const [gridType, setGridType] = useState<string>(GridType.Square);
+    const [gridSize, setGridSize] = useState<string>(GridSize.Medium);
     const [speed, setSpeed] = useState<string>(Speed.Fast);
-    const [running, setRunning] = useState<string>(RunningState.READY);
 
     const [windowSize, setWindowSize] = useState({
         width: window.innerWidth,
@@ -49,12 +42,10 @@ export function AppContextProvider({
                 setMazeGen,
                 algorithm,
                 setAlgorithm,
-                gridType,
-                setGridType,
+                gridSize,
+                setGridSize,
                 speed,
                 setSpeed,
-                running,
-                setRunning,
                 windowSize,
             }}
         >
