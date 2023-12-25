@@ -15,13 +15,15 @@ function squareSketch(p5) {
     let grid;
     let rows;
     let cols;
-    let frameRate = 1;
     let mazeGenerated;
     const setMazeGenerated = (value) => {
         mazeGenerated = value;
-        if (window.updateState) {
-            window.updateState({ mazeGenerated: value });
-        }
+        let event = new CustomEvent("canvas", {
+            detail: {
+                mazeGenerated: value,
+            },
+        });
+        window.dispatchEvent(event);
     };
     let pathGenerated;
     let pathVisible;
@@ -40,7 +42,6 @@ function squareSketch(p5) {
     let end;
 
     const initMazeGeneration = () => {
-        p5.clear();
         cols = Math.floor(w / squareSize);
         rows = Math.floor(h / squareSize);
         grid = [];
@@ -106,6 +107,26 @@ function squareSketch(p5) {
                     removeWalls(grid[i], grid[i + cols]);
                 }
             }
+        } else if (generation === MazeGen.SimpleWall) {
+            for (let i = 0; i < grid.length; i++) {
+                grid[i].generated = true;
+                if (i % cols !== cols - 1) {
+                    removeWalls(grid[i], grid[i + 1]);
+                }
+                if (i < grid.length - cols) {
+                    removeWalls(grid[i], grid[i + cols]);
+                }
+            }
+            for (
+                let i = Math.floor(cols * 0.1);
+                i < Math.floor(cols * 0.9);
+                i++
+            ) {
+                addWalls(
+                    grid[index(i, Math.floor(rows / 2))],
+                    grid[index(i, Math.floor(rows / 2) + 1)]
+                );
+            }
         }
         setMazeGenerated(false);
         pathGenerated = false;
@@ -137,7 +158,7 @@ function squareSketch(p5) {
             start = grid[startInd];
             let endInd = Math.floor(Math.random() * grid.length);
             if (endInd === startInd) {
-                endInd = (endInd + grid.length / 2) % grid.length;
+                endInd = (endInd + 1) % grid.length;
             }
             end = grid[endInd];
 
@@ -146,6 +167,8 @@ function squareSketch(p5) {
         }
         start.visited = true;
         start.distance = 0;
+        start.G = 0;
+        start.H = 0;
         queue = [start];
         path = [];
 
@@ -155,7 +178,6 @@ function squareSketch(p5) {
     };
 
     p5.setup = () => {
-        p5.frameRate(frameRate);
         h = Math.max(
             p5.windowHeight -
                 document.getElementsByClassName("App-header")[0].offsetHeight -
@@ -165,6 +187,16 @@ function squareSketch(p5) {
         w = p5.windowWidth - 120;
         p5.createCanvas(w, h);
 
+        window.addEventListener("restart", (event) => {
+            if (event.detail.mazeGen) {
+                initMazeGeneration();
+            } else if (event.detail.pathfinding && mazeGenerated) {
+                start.isStart = false;
+                end.isEnd = false;
+                initPathFinding();
+            }
+        });
+
         initMazeGeneration();
     };
 
@@ -172,13 +204,16 @@ function squareSketch(p5) {
         if (props.speed) {
             switch (props.speed) {
                 case Speed.Slow:
-                    frameRate = 2;
+                    p5.frameRate(2);
                     break;
                 case Speed.Medium:
-                    frameRate = 10;
+                    p5.frameRate(10);
                     break;
                 case Speed.Fast:
-                    frameRate = 60;
+                    p5.frameRate(60);
+                    break;
+                case Speed.Pause:
+                    p5.frameRate(0);
                     break;
                 default:
                     break;
@@ -199,6 +234,7 @@ function squareSketch(p5) {
                     break;
             }
             gridSize = props.gridSize;
+            p5.clear();
             initMazeGeneration();
         }
         if (props.mazeGen && props.mazeGen !== generation) {
@@ -214,7 +250,9 @@ function squareSketch(p5) {
     };
 
     p5.draw = () => {
-        p5.frameRate(frameRate);
+        // osc.freq(freq, 0.1);
+        // osc.amp(amp, 0.1);
+
         if (!mazeGenerated) {
             grid.forEach((cell) => {
                 cell.highlighted = cell === current;
@@ -322,18 +360,20 @@ function squareSketch(p5) {
                     initPathFinding();
                 }
             } else if (generation === MazeGen.RandomWalls) {
-                if (stack.length > 0) {
-                    let current = stack.pop();
-                    let neighbors = current.getNeighbors();
-                    if (neighbors.length > 0) {
-                        neighbors.forEach((neighbor) => {
-                            if (Math.random() < 0.4) {
-                                removeWalls(current, neighbor);
-                            }
-                        });
+                for (let i = 0; i < cols; i++) {
+                    if (stack.length > 0) {
+                        let current = stack.pop();
+                        let neighbors = current.getNeighbors();
+                        if (neighbors.length > 0) {
+                            neighbors.forEach((neighbor) => {
+                                if (Math.random() < 0.4) {
+                                    removeWalls(current, neighbor);
+                                }
+                            });
+                        }
+                    } else {
+                        initPathFinding();
                     }
-                } else {
-                    initPathFinding();
                 }
             } else if (generation === MazeGen.RandomizedPrim) {
                 if (stack.length > 0) {
@@ -392,7 +432,10 @@ function squareSketch(p5) {
                 } else {
                     initPathFinding();
                 }
-            } else if (generation === MazeGen.None) {
+            } else if (
+                generation === MazeGen.None ||
+                generation === MazeGen.SimpleWall
+            ) {
                 initPathFinding();
             }
         } else if (!pathGenerated) {
@@ -503,9 +546,10 @@ function squareSketch(p5) {
                         if (!neighbor.visited) {
                             neighbor.visited = true;
                             neighbor.parent = current;
-                            neighbor.distance =
-                                Math.abs(neighbor.x - end.x) +
-                                Math.abs(neighbor.y - end.y);
+                            neighbor.distance = Math.sqrt(
+                                Math.pow(neighbor.x - end.x, 2) +
+                                    Math.pow(neighbor.y - end.y, 2)
+                            );
                             queue.push(neighbor);
                             if (neighbor === end) {
                                 let temp = neighbor;
@@ -522,6 +566,49 @@ function squareSketch(p5) {
                     });
                     queue.sort((a, b) => {
                         return a.distance - b.distance;
+                    });
+                }
+            } else if (algorithm === PathfindingAlgorithm.AStar) {
+                if (queue.length > 0) {
+                    let current = queue.shift();
+                    if (current.parent) {
+                        p5.stroke(COLORS.malachiteDisabled);
+                        p5.strokeWeight(squareSize * 0.15);
+                        p5.line(
+                            (current.x + 0.5) * squareSize,
+                            (current.y + 0.5) * squareSize,
+                            (current.parent.x + 0.5) * squareSize,
+                            (current.parent.y + 0.5) * squareSize
+                        );
+                    }
+                    let neighbors = current.getAdjacent().filter((neighbor) => {
+                        return !neighbor.visited;
+                    });
+                    neighbors.forEach((neighbor) => {
+                        if (!neighbor.visited) {
+                            neighbor.visited = true;
+                            neighbor.parent = current;
+                            neighbor.G = current.G + 1;
+                            neighbor.H = Math.sqrt(
+                                Math.pow(neighbor.x - end.x, 2) +
+                                    Math.pow(neighbor.y - end.y, 2)
+                            );
+                            queue.push(neighbor);
+                            if (neighbor === end) {
+                                let temp = neighbor;
+                                path.push(temp);
+                                while (temp.parent) {
+                                    path.push(temp.parent);
+                                    temp = temp.parent;
+                                }
+                                path.reverse();
+                                pathGenerated = true;
+                                return;
+                            }
+                        }
+                    });
+                    queue.sort((a, b) => {
+                        return a.G + a.H - b.G - b.H;
                     });
                 }
             }
@@ -593,7 +680,7 @@ function squareSketch(p5) {
             p5.rect(x, y, squareSize, squareSize);
 
             p5.stroke(COLORS.gunmetalLight);
-            p5.strokeWeight(squareSize * 0.05);
+            p5.strokeWeight(squareSize * 0.1);
             if (this.walls.top) {
                 p5.line(x, y, x + squareSize, y);
             }
@@ -628,6 +715,48 @@ function squareSketch(p5) {
             if (left && !this.walls.left) {
                 neighbors.push(left);
             }
+
+            // const topRight = grid[index(this.x + 1, this.y - 1)];
+            // const bottomRight = grid[index(this.x + 1, this.y + 1)];
+            // const bottomLeft = grid[index(this.x - 1, this.y + 1)];
+            // const topLeft = grid[index(this.x - 1, this.y - 1)];
+
+            // if (
+            //     topRight &&
+            //     !this.walls.top &&
+            //     !this.walls.right &&
+            //     !topRight.walls.left &&
+            //     !topRight.walls.bottom
+            // ) {
+            //     neighbors.push(topRight);
+            // }
+            // if (
+            //     bottomRight &&
+            //     !this.walls.right &&
+            //     !this.walls.bottom &&
+            //     !bottomRight.walls.top &&
+            //     !bottomRight.walls.left
+            // ) {
+            //     neighbors.push(bottomRight);
+            // }
+            // if (
+            //     bottomLeft &&
+            //     !this.walls.bottom &&
+            //     !this.walls.left &&
+            //     !bottomLeft.walls.top &&
+            //     !bottomLeft.walls.right
+            // ) {
+            //     neighbors.push(bottomLeft);
+            // }
+            // if (
+            //     topLeft &&
+            //     !this.walls.left &&
+            //     !this.walls.top &&
+            //     !topLeft.walls.right &&
+            //     !topLeft.walls.bottom
+            // ) {
+            //     neighbors.push(topLeft);
+            // }
 
             return neighbors;
         }

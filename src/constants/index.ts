@@ -4,6 +4,7 @@ export enum MazeGen {
     RandomizedPrim = "Randomized Prim's",
     RandomizedKruskal = "Randomized Kruskal's",
     RandomWalls = "Random Walls",
+    SimpleWall = "Simple Wall",
     None = "None",
 }
 
@@ -11,6 +12,7 @@ export enum PathfindingAlgorithm {
     BreadthFirstSearch = "Breadth-First Search",
     DepthFirstSearch = "Depth-First Search",
     GreedyBestFirstSearch = "Greedy Best-First Search",
+    AStar = "A* Search",
 }
 
 export enum GridSize {
@@ -20,9 +22,10 @@ export enum GridSize {
 }
 
 export enum Speed {
-    Fast = "Fast",
-    Medium = "Medium",
+    Pause = "Pause",
     Slow = "Slow",
+    Medium = "Medium",
+    Fast = "Fast",
 }
 
 export const COLORS = {

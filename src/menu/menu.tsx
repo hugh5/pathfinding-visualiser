@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { IoLogoGithub } from "react-icons/io";
-import { FaPlay, FaRotateLeft, FaStop } from "react-icons/fa6";
+import { FaRotateRight } from "react-icons/fa6";
 import { RxQuestionMark } from "react-icons/rx";
 import { SlArrowDown } from "react-icons/sl";
 import { AppContext } from "../context/appstate";
@@ -21,10 +21,10 @@ const Menu = () => {
         setGridSize,
         speed,
         setSpeed,
-        windowSize,
     } = useContext(AppContext);
 
     const [dropdown, setDropdown] = useState<string | null>(null);
+    const [mazeGenerated, setMazeGenerated] = useState<boolean>(false);
 
     useEffect(() => {
         const handleClickOutside = (event: any) => {
@@ -44,27 +44,18 @@ const Menu = () => {
             }
         };
         document.addEventListener("click", handleClickOutside, true);
+
+        window.addEventListener("canvas", (event: any) => {
+            setMazeGenerated(event.detail.mazeGenerated);
+        });
         return () => {
             document.removeEventListener("click", handleClickOutside, true);
         };
     }, []);
 
     return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                flexDirection: windowSize.width < 600 ? "column" : "row",
-                padding: "0 " + windowSize.width * 0.1 + "px",
-            }}
-        >
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                }}
-            >
+        <div className="menu">
+            <div className="title">
                 <h3 style={{ margin: 0 }}>Pathfinding Visualiser</h3>
                 <a className="github-link" href="https://www.github.com/hugh5">
                     <p className="github">hugh5</p>
@@ -112,6 +103,19 @@ const Menu = () => {
                         ))}
                     </div>
                 </div>
+                <button
+                    className="restart-btn"
+                    onClick={() => {
+                        let event = new CustomEvent("restart", {
+                            detail: {
+                                mazeGen: true,
+                            },
+                        });
+                        window.dispatchEvent(event);
+                    }}
+                >
+                    <FaRotateRight />
+                </button>
                 <div className="dropdown">
                     <div className="dropdown-caption">
                         Pathfinding Algorithm:
@@ -164,6 +168,20 @@ const Menu = () => {
                         )}
                     </div>
                 </div>
+                <button
+                    className="restart-btn"
+                    onClick={() => {
+                        let event = new CustomEvent("restart", {
+                            detail: {
+                                pathfinding: true,
+                            },
+                        });
+                        window.dispatchEvent(event);
+                    }}
+                    disabled={!mazeGenerated}
+                >
+                    <FaRotateRight />
+                </button>
                 <div className="dropdown">
                     <div className="dropdown-caption">
                         Grid Size:
@@ -204,7 +222,7 @@ const Menu = () => {
                         ))}
                     </div>
                 </div>
-                <div className="dropdown">
+                <div className="dropdown speed">
                     <div className="dropdown-caption">
                         Speed:
                         <RxQuestionMark />
