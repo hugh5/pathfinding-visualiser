@@ -58,7 +58,7 @@ code {
 .menu {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  /* align-items: center; */
   justify-content: space-evenly;
   padding: 0 150px;
 }
@@ -69,12 +69,31 @@ code {
     justify-content: center;
     padding: 0;
   }
+  .title {
+    margin-left: 60px;
+  }
 }
 
 .title {
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
 
+}
+
+.mute-btn {
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 35px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  color: black;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--malachite);
 }
 
 .container {
@@ -91,6 +110,7 @@ code {
     grid-row: 4;
   }
 }
+
 .restart-btn {
   font-size: 16px;
   overflow: hidden;

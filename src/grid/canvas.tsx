@@ -4,7 +4,8 @@ import { squareSketch } from "./squarecanvas";
 import { ReactP5Wrapper } from "@p5-wrapper/react";
 
 const Canvas = () => {
-    const { mazeGen, algorithm, gridSize, speed } = useContext(AppContext);
+    const { mazeGen, algorithm, gridSize, speed, volume } =
+        useContext(AppContext);
 
     return (
         <div>
@@ -15,6 +16,7 @@ const Canvas = () => {
                     algorithm={algorithm}
                     gridSize={gridSize}
                     speed={speed}
+                    volume={volume}
                 />
             </div>
         </div>

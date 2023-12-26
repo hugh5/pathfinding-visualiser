@@ -17,6 +17,7 @@ export function AppContextProvider({
     );
     const [gridSize, setGridSize] = useState<string>(GridSize.Medium);
     const [speed, setSpeed] = useState<string>(Speed.Fast);
+    const [volume, setVolume] = useState<number>(0);
 
     return (
         <AppContext.Provider
@@ -29,6 +30,8 @@ export function AppContextProvider({
                 setGridSize,
                 speed,
                 setSpeed,
+                volume,
+                setVolume,
             }}
         >
             {children}

@@ -4,6 +4,7 @@ export enum MazeGen {
     RandomizedPrim = "Randomized Prim's",
     RandomizedKruskal = "Randomized Kruskal's",
     RandomWalls = "Random Walls",
+    CyclicRecursiveBacktracker = "Cyclic Recursive Backtracker",
     SimpleWall = "Simple Wall",
     None = "None",
 }

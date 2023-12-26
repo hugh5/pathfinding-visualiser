@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { IoLogoGithub } from "react-icons/io";
-import { FaRotateRight } from "react-icons/fa6";
+import { FaVolumeUp, FaVolumeMute, FaVolumeDown } from "react-icons/fa";
+import { FaPlay, FaRotateRight } from "react-icons/fa6";
 import { RxQuestionMark } from "react-icons/rx";
 import { SlArrowDown } from "react-icons/sl";
 import { AppContext } from "../context/appstate";
@@ -21,10 +22,13 @@ const Menu = () => {
         setGridSize,
         speed,
         setSpeed,
+        volume,
+        setVolume,
     } = useContext(AppContext);
 
     const [dropdown, setDropdown] = useState<string | null>(null);
     const [mazeGenerated, setMazeGenerated] = useState<boolean>(false);
+    const [started, setStarted] = useState<boolean>(false);
 
     useEffect(() => {
         const handleClickOutside = (event: any) => {
@@ -61,6 +65,18 @@ const Menu = () => {
                     <p className="github">hugh5</p>
                     <IoLogoGithub />
                 </a>
+                <button
+                    className="mute-btn"
+                    onClick={() => setVolume((volume + 2) % 3)}
+                >
+                    {volume == 0 ? (
+                        <FaVolumeMute />
+                    ) : volume == 1 ? (
+                        <FaVolumeDown />
+                    ) : (
+                        <FaVolumeUp />
+                    )}
+                </button>
             </div>
             <div className="container">
                 <div className="dropdown">
@@ -106,6 +122,7 @@ const Menu = () => {
                 <button
                     className="restart-btn"
                     onClick={() => {
+                        setStarted(true);
                         let event = new CustomEvent("restart", {
                             detail: {
                                 mazeGen: true,
@@ -114,7 +131,7 @@ const Menu = () => {
                         window.dispatchEvent(event);
                     }}
                 >
-                    <FaRotateRight />
+                    {started ? <FaRotateRight /> : <FaPlay />}
                 </button>
                 <div className="dropdown">
                     <div className="dropdown-caption">

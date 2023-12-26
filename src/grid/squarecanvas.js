@@ -6,8 +6,17 @@ import {
     Speed,
 } from "../constants";
 
+import * as p5 from "p5";
+
+window.p5 = p5;
+
+await import("p5/lib/addons/p5.sound");
+
 function squareSketch(p5) {
+    let wave;
     // state
+    let started = false;
+    let volume = 0;
     let w;
     let h;
     let gridSize = GridSize.Medium;
@@ -55,7 +64,10 @@ function squareSketch(p5) {
         sets = new Set();
         current = undefined;
 
-        if (generation === MazeGen.RecursiveBacktracker) {
+        if (
+            generation === MazeGen.RecursiveBacktracker ||
+            generation === MazeGen.CyclicRecursiveBacktracker
+        ) {
             let startInd = Math.floor(Math.random() * grid.length);
             current = grid[startInd];
             stack.push(current);
@@ -187,7 +199,11 @@ function squareSketch(p5) {
         w = p5.windowWidth - 120;
         p5.createCanvas(w, h);
 
+        wave = new window.p5.Oscillator();
+        wave.setType("sine");
+
         window.addEventListener("restart", (event) => {
+            started = true;
             if (event.detail.mazeGen) {
                 initMazeGeneration();
             } else if (event.detail.pathfinding && mazeGenerated) {
@@ -196,8 +212,6 @@ function squareSketch(p5) {
                 initPathFinding();
             }
         });
-
-        initMazeGeneration();
     };
 
     p5.updateWithProps = (props) => {
@@ -213,11 +227,15 @@ function squareSketch(p5) {
                     p5.frameRate(60);
                     break;
                 case Speed.Pause:
+                    wave.stop();
                     p5.frameRate(0);
                     break;
                 default:
                     break;
             }
+        }
+        if (props.volume !== undefined) {
+            volume = props.volume;
         }
         if (props.gridSize && props.gridSize !== gridSize) {
             switch (props.gridSize) {
@@ -250,15 +268,28 @@ function squareSketch(p5) {
     };
 
     p5.draw = () => {
-        // osc.freq(freq, 0.1);
-        // osc.amp(amp, 0.1);
+        if (!started) {
+            return;
+        }
+        if (current && !pathVisible) {
+            if (!wave.started) {
+                wave.start();
+            }
+            wave.freq(
+                p5.map(current.y * cols + current.x, 0, grid.length, 100, 880)
+            );
+            wave.amp(p5.map(volume, 0, 3, 0, 0.7, true));
+        }
 
         if (!mazeGenerated) {
             grid.forEach((cell) => {
                 cell.highlighted = cell === current;
                 cell.show(p5);
             });
-            if (generation === MazeGen.RecursiveBacktracker) {
+            if (
+                generation === MazeGen.RecursiveBacktracker ||
+                generation === MazeGen.CyclicRecursiveBacktracker
+            ) {
                 current.generated = true;
                 let neighbors = current.getNeighbors().filter((neighbor) => {
                     return !neighbor.generated;
@@ -271,6 +302,22 @@ function squareSketch(p5) {
                     removeWalls(current, next);
                     current = next;
                 } else if (stack.length > 0) {
+                    if (
+                        generation === MazeGen.CyclicRecursiveBacktracker &&
+                        Math.random() < 0.5
+                    ) {
+                        let d = Math.random() < 0.5 ? -1 : 1;
+                        let x = Math.random() < 0.5;
+                        removeWalls(
+                            current,
+                            grid[
+                                index(
+                                    current.x + (x ? d : 0),
+                                    current.y + (x ? 0 : d)
+                                )
+                            ]
+                        );
+                    }
                     current = stack.pop();
                 } else {
                     initPathFinding();
@@ -291,6 +338,7 @@ function squareSketch(p5) {
                     if (params.width > 1 && params.height > 1) {
                         let x = params.x;
                         let y = params.y;
+                        current = grid[index(x, y)];
                         let width = params.width;
                         let height = params.height;
                         let horizontal =
@@ -362,14 +410,14 @@ function squareSketch(p5) {
             } else if (generation === MazeGen.RandomWalls) {
                 for (let i = 0; i < cols; i++) {
                     if (stack.length > 0) {
-                        let current = stack.pop();
+                        current = stack.pop();
                         let neighbors = current.getNeighbors();
                         if (neighbors.length > 0) {
-                            neighbors.forEach((neighbor) => {
+                            for (let j = 0; j < neighbors.length; j++) {
                                 if (Math.random() < 0.4) {
-                                    removeWalls(current, neighbor);
+                                    removeWalls(current, neighbors[j]);
                                 }
-                            });
+                            }
                         }
                     } else {
                         initPathFinding();
@@ -455,7 +503,7 @@ function squareSketch(p5) {
             );
             if (algorithm === PathfindingAlgorithm.BreadthFirstSearch) {
                 if (queue.length > 0) {
-                    let current = queue.shift();
+                    current = queue.shift();
                     let neighbors = current.getAdjacent().filter((neighbor) => {
                         return !neighbor.visited;
                     });
@@ -489,7 +537,7 @@ function squareSketch(p5) {
                 }
             } else if (algorithm === PathfindingAlgorithm.DepthFirstSearch) {
                 if (queue.length > 0) {
-                    let current = queue.pop();
+                    current = queue.pop();
                     current.visited = true;
                     if (current.parent) {
                         p5.stroke(COLORS.malachiteDisabled);
@@ -528,7 +576,7 @@ function squareSketch(p5) {
                 algorithm === PathfindingAlgorithm.GreedyBestFirstSearch
             ) {
                 if (queue.length > 0) {
-                    let current = queue.shift();
+                    current = queue.shift();
                     if (current.parent) {
                         p5.stroke(COLORS.malachiteDisabled);
                         p5.strokeWeight(squareSize * 0.15);
@@ -570,7 +618,7 @@ function squareSketch(p5) {
                 }
             } else if (algorithm === PathfindingAlgorithm.AStar) {
                 if (queue.length > 0) {
-                    let current = queue.shift();
+                    current = queue.shift();
                     if (current.parent) {
                         p5.stroke(COLORS.malachiteDisabled);
                         p5.strokeWeight(squareSize * 0.15);
@@ -614,15 +662,15 @@ function squareSketch(p5) {
             }
         } else if (!pathVisible) {
             if (path.length > 1) {
-                let next = path.pop();
-                let parent = next.parent;
+                current = path.pop();
+                let parent = current.parent;
                 p5.stroke(COLORS.celestialBlueDark);
                 p5.strokeWeight(squareSize * 0.3);
                 p5.line(
                     (parent.x + 0.5) * squareSize,
                     (parent.y + 0.5) * squareSize,
-                    (next.x + 0.5) * squareSize,
-                    (next.y + 0.5) * squareSize
+                    (current.x + 0.5) * squareSize,
+                    (current.y + 0.5) * squareSize
                 );
 
                 p5.noStroke();
@@ -641,6 +689,7 @@ function squareSketch(p5) {
                 );
             } else {
                 pathVisible = true;
+                wave.stop();
             }
         }
     };
@@ -680,7 +729,7 @@ function squareSketch(p5) {
             p5.rect(x, y, squareSize, squareSize);
 
             p5.stroke(COLORS.gunmetalLight);
-            p5.strokeWeight(squareSize * 0.1);
+            p5.strokeWeight(squareSize * 0.05);
             if (this.walls.top) {
                 p5.line(x, y, x + squareSize, y);
             }
