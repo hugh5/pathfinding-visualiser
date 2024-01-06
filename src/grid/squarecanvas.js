@@ -193,7 +193,7 @@ function squareSketch(p5) {
         h = Math.max(
             p5.windowHeight -
                 document.getElementsByClassName("App-header")[0].offsetHeight -
-                120,
+                125,
             300
         );
         w = p5.windowWidth - 120;
@@ -276,9 +276,9 @@ function squareSketch(p5) {
                 wave.start();
             }
             wave.freq(
-                p5.map(current.y * cols + current.x, 0, grid.length, 100, 880)
+                p5.map(current.y * cols + current.x, 0, grid.length, 100, 1000)
             );
-            wave.amp(p5.map(volume, 0, 3, 0, 0.7, true));
+            wave.amp(p5.map(volume, 0, 3, 0, 0.4, true));
         }
 
         if (!mazeGenerated) {
