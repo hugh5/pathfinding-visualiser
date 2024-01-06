@@ -1,6 +1,7 @@
 {
     "name": "pathfinding",
     "version": "0.1.0",
+    "homepage": "https://hugh5.github.io/pathfinding-visualiser",
     "private": true,
     "dependencies": {
         "@p5-wrapper/react": "^4.3.2",
